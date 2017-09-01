@@ -15,7 +15,7 @@
   },
   "main": "./lib/dploy",
   "bin": {
-    "a-dploy": "./bin/dploy"
+    "dploy": "./bin/dploy"
   },
   "engines": {
     "node": ">= 0.10.x"

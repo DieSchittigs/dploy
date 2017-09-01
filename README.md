@@ -1,5 +1,10 @@
 # DPLOY
 
+## yada yada... This is my version, with some minor tweaks. Since I think it's no longer being maintained (I think)
+```
+npm install https://github.com/AdonMaster/dploy/tarball/master -g
+```
+
 **DPLOY is an FTP/SFTP deployment tool built in node.js**  
 Uploads the latest changes by comparing the version on your server with your git repository.
 

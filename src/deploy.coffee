@@ -523,7 +523,7 @@ module.exports = class Deploy
 		remote_path = @_normalize(@config.path.remote + item.remote)
 
 		# lets check it's existance first
-		if fs.exists(item.name)
+		if fs.statSync item.name
 			# Upload the file to the server
 			connection.upload item.name, remote_path, (error) =>
 				if error
@@ -537,7 +537,8 @@ module.exports = class Deploy
 				# Keep uploading the rest
 				@nextOnQueue connection
 		else
-			console.log "[ + ]".red, "Fail to find the damn file #{item.name}:".red
+			console.log "[ + ]".red, "WTF? #{item.name}:".red
+#			console.log "[ + ]".red, "Fail to find the god damn file #{item.name}:".red
 			item.completed = true
 			@nextOnQueue connection
 

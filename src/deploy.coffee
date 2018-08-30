@@ -522,17 +522,23 @@ module.exports = class Deploy
 		# Set the entire remote path
 		remote_path = @_normalize(@config.path.remote + item.remote)
 
-		# Upload the file to the server
-		connection.upload item.name, remote_path, (error) =>
-			if error
-				console.log "[ + ]".blue, "Fail uploading file #{item.name}:".red, error
-				item.started = false
-				item.completed = false
-			else
-				console.log "[ + ]".blue + " File uploaded: #{item.name}:".blue
-				item.completed = true
+		# lets check it's existance first
+		if fs.exists(item.name)
+			# Upload the file to the server
+			connection.upload item.name, remote_path, (error) =>
+				if error
+					console.log "[ + ]".blue, "Fail uploading file #{item.name}:".red, error
+					item.started = false
+					item.completed = false
+				else
+					console.log "[ + ]".blue + " File uploaded: #{item.name}:".blue
+					item.completed = true
 
-			# Keep uploading the rest
+				# Keep uploading the rest
+				@nextOnQueue connection
+		else
+			console.log "[ + ]".red, "Fail to find the damn file #{item.name}:".red
+			item.completed = true
 			@nextOnQueue connection
 
 	###

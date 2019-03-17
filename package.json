@@ -1,6 +1,6 @@
 {
   "name": "dploy",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "author": "Lucas Motta <http://lucasmotta.com>",
   "description": "Command line tool to deploy websites using FTP/SFTP and git.",
   "keywords": [
@@ -11,7 +11,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/AdonMaster/dploy"
+    "url": "https://github.com/KenorFR/dploy"
   },
   "main": "./lib/dploy",
   "bin": {

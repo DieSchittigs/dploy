@@ -1,8 +1,10 @@
 # DPLOY
 
-## yada yada... This is my version, with some minor tweaks. Since I think it's no longer being maintained (I think)
+## Origin : https://github.com/AdonMaster/dploy/
+## First origin : https://github.com/lucasmotta/dploy
+
 ```
-npm install https://github.com/AdonMaster/dploy#v1.5.0 -g
+npm install https://github.com/KenorFR/dploy.git -g
 ```
 
 **DPLOY is an FTP/SFTP deployment tool built in node.js**  
@@ -35,7 +37,7 @@ Will install the `dploy.yaml` file and set up a `post-commit` script on your `.g
 
 ### dploy …rest
 Anything else after the `dploy` command will be used as an environment, like this:  
-  
+
 ```
 dploy dev stage production
 ```  
@@ -61,7 +63,7 @@ dploy
 ```
 
 You can also set the environment that you want to upload:  
-  
+
 ```
 dploy server_name
 ```
@@ -179,7 +181,7 @@ The remote folder where your files will be uploaded. If you don't set anything, 
 * Default: `none`    
 
 Exclude files that are tracked by git, but that you don't want on your server. You can target individual files or use [glob](https://github.com/isaacs/minimatch) to target multiple files and file types.
-  
+
 * Individual files: `exclude: ["dploy.yaml", "package.json", "path/to/file.js"]`.
 * Using glob: `exclude: ["*.yaml", "*.json", "path/**/*.js", "**/*.md"]`.
 
@@ -200,24 +202,24 @@ include:
 ## Ignore include flag
 If you are using the **include** parameter on your `dploy.yaml`, you will note that those files will always be uploaded to the server, no matter if they were modified or not (because they aren't necessarily tracked by git).  
 In order to avoid re-uploading those files all the time, there's a tag called `--ignore-include` that you can set when calling _DPLOY_.  
-  
+
 ```
 dploy stage --ignore-include
 ```  
 Or using a shortcut:  
-  
+
 ```
 dploy stage -i
 ```
 
 ## Catchup flag
 If you already have your files on the server (from a previous manual upload or if you somehow deleted the revision file), setting this flag will upload only the revision file and nothing more. It can be used for multiple servers too.
-  
+
 ```
 dploy stage --catchup
 ```  
 Or using a shortcut:  
-  
+
 ```
 dploy stage -c
 ```
@@ -258,7 +260,7 @@ Deploy to **stage** environment only:
 dploy stage
 ```
 Or if you want to upload to more than one environment:  
-  
+
 ```
 dploy dev stage production
 ```
@@ -284,7 +286,7 @@ server_name:
     include:
         "videos/*.mp4": "funny/"
         "*.json *.yaml *.xml": "data/"
-            
+
 ```
 
 # Contribute

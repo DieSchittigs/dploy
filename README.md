@@ -199,6 +199,16 @@ include:
     "*.json": "data/"
 ```
 
+### compress
+* Type: `Array`  
+* Default: `none`    
+
+The **compress** parameter lets you define folders that will be compressed to a single zip file before upload.
+
+compress:
+      - "vendor"
+      - "node_modules"
+
 ## Ignore include flag
 If you are using the **include** parameter on your `dploy.yaml`, you will note that those files will always be uploaded to the server, no matter if they were modified or not (because they aren't necessarily tracked by git).  
 In order to avoid re-uploading those files all the time, there's a tag called `--ignore-include` that you can set when calling _DPLOY_.  
@@ -270,6 +280,7 @@ This example will upload your local `deploy` folder to your remote `public_html`
 
 * Will **include** all `.jpeg` files inside your `photos` folder.
 * Will **include** `kitty.mp4` and `ducklings.mp4` files from your `videos` folder.
+* Will **compress** the `vendor` folder.
 * Will **exclude** all `yaml`, `json` from your `deploy` folder.
 * Will **exclude** all `js` files inside the folder `deploy/path`.
 * Will **exclude** all `md` files from your `deploy` folder.
@@ -291,6 +302,8 @@ server_name:
         - "videos/kitty.mp4"
         - "videos/ducklings.mp4"
         - "photos/*.jpeg"
+    compress:
+        - "vendor"
 
 ```
 

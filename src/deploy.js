@@ -6,6 +6,8 @@ const Signal  = require("signals");
 const expand  = require("glob-expand");
 const minimatch = require("minimatch");
 const prompt  = require("prompt");
+const zipFolder = require('zip-folder');
+const md5 = require('md5');
 const { exec }  = require("child_process");
 
 
@@ -295,8 +297,11 @@ module.exports = class Deploy {
         // We can finish the process.
         if (old_rev === new_rev) {
             if (this.config.include) {
-                this.includeExtraFiles();
-                if (this.config.check) { this.askBeforeUpload(); } else { this.startUploads(); }
+                this.includeExtraFiles()
+                .then(()=>{
+                    if (this.config.check) { this.askBeforeUpload(); } else { this.startUploads(); }
+                })
+                .catch(err => console.error(err))
                 return;
             } else {
                 console.log("No diffs between local and remote :)".blue);
@@ -328,13 +333,18 @@ module.exports = class Deploy {
                     }
                 }
 
-                this.includeExtraFiles();
+                this.includeExtraFiles()
+                .then(()=>{
+                    // Add the revision file
+                    this.toUpload.push({name:this.revisionPath, remote:this.config.revision});
+                    if (this.config.check) { this.askBeforeUpload(); } else { this.startUploads(); }
+                })
+                .catch(err => console.error(err));
+            } else {
+                // Add the revision file
+                this.toUpload.push({name:this.revisionPath, remote:this.config.revision});
+                if (this.config.check) { this.askBeforeUpload(); } else { this.startUploads(); }
             }
-
-            // Add the revision file
-            this.toUpload.push({name:this.revisionPath, remote:this.config.revision});
-        
-            if (this.config.check) { this.askBeforeUpload(); } else { this.startUploads(); }
         });
     }
 
@@ -359,13 +369,18 @@ module.exports = class Deploy {
                     if (this.canUpload(detail)) { this.toUpload.push({name:detail, remote:remoteName}); }
                 }
 
-                this.includeExtraFiles();
+                this.includeExtraFiles()
+                .then(()=>{
+                    // Add the revision file
+                    this.toUpload.push({name:this.revisionPath, remote:this.config.revision});
+                    if (this.config.check) { this.askBeforeUpload(); } else { this.startUploads(); }
+                })
+                .catch(err => console.error(err));
+            } else {
+                // Add the revision file
+                this.toUpload.push({name:this.revisionPath, remote:this.config.revision});
+                if (this.config.check) { this.askBeforeUpload(); } else { this.startUploads(); }
             }
-
-            // Add the revision file
-            this.toUpload.push({name:this.revisionPath, remote:this.config.revision});
-        
-            if (this.config.check) { this.askBeforeUpload(); } else { this.startUploads(); }
         });
     }
         
@@ -374,41 +389,59 @@ module.exports = class Deploy {
     Include extra files from the config file
     */
     includeExtraFiles() {
-        if (this.ignoreInclude || this.catchup) { return false; }
+        return new Promise((resolve, reject) => {
+            if (this.ignoreInclude || this.catchup) { return resolve(); }
 
-        if(Array.isArray(this.config.include)){
-            console.log(this.config.include);
-            this.config.include.forEach((key)=>{
-                const files = expand({ filter: "isFile", cwd:process.cwd() }, key);
-                // Match the path of the key object to remove everything that is not a glob
-                const match = path.dirname(key).match(/^[0-9a-zA-Z_\-/\\]+/);
-                for (let file of Array.from(files)) {
-                    // If there's any match for this key, we remove from the remote file name
-                    // And we also clean the remote url
-                    let remoteFile = match && match.length ? file.substring(match[0].length) : file;
-                    remoteFile = path.dirname(key) + remoteFile;
-                    remoteFile = remoteFile.replace(/(\/\/)/g, "/");
-    
-                    this.toUpload.push({name:file, remote:remoteFile});
-                }
-            });
-        } else {
-            for (let key in this.config.include) {
-                const files = expand({ filter: "isFile", cwd:process.cwd() }, key);
-                // Match the path of the key object to remove everything that is not a glob
-                const match = path.dirname(key).match(/^[0-9a-zA-Z_\-/\\]+/);
-                for (let file of Array.from(files)) {
-                    // If there's any match for this key, we remove from the remote file name
-                    // And we also clean the remote url
-                    let remoteFile = match && match.length ? file.substring(match[0].length) : file;
-                    remoteFile = this.config.include[key] + remoteFile;
-                    remoteFile = remoteFile.replace(/(\/\/)/g, "/");
-    
-                    this.toUpload.push({name:file, remote:remoteFile});
+            if(Array.isArray(this.config.include)){
+                this.config.include.forEach((key)=>{
+                    const files = expand({ filter: "isFile", cwd:process.cwd() }, key);
+                    // Match the path of the key object to remove everything that is not a glob
+                    const match = path.dirname(key).match(/^[0-9a-zA-Z_\-/\\]+/);
+                    for (let file of Array.from(files)) {
+                        // If there's any match for this key, we remove from the remote file name
+                        // And we also clean the remote url
+                        let remoteFile = match && match.length ? file.substring(match[0].length) : file;
+                        remoteFile = path.dirname(key) + remoteFile;
+                        remoteFile = remoteFile.replace(/(\/\/)/g, "/");
+        
+                        this.toUpload.push({name:file, remote:remoteFile});
+                        if(!this.config.compress) return resolve();
+                    }
+                });
+            } else {
+                for (let key in this.config.include) {
+                    const files = expand({ filter: "isFile", cwd:process.cwd() }, key);
+                    // Match the path of the key object to remove everything that is not a glob
+                    const match = path.dirname(key).match(/^[0-9a-zA-Z_\-/\\]+/);
+                    for (let file of Array.from(files)) {
+                        // If there's any match for this key, we remove from the remote file name
+                        // And we also clean the remote url
+                        let remoteFile = match && match.length ? file.substring(match[0].length) : file;
+                        remoteFile = this.config.include[key] + remoteFile;
+                        remoteFile = remoteFile.replace(/(\/\/)/g, "/");
+        
+                        this.toUpload.push({name:file, remote:remoteFile});
+                        if(!this.config.compress) return resolve();
+                    }
                 }
             }
-        }
-        return true;
+            if(!this.config.compress) return resolve();
+            const decompressScript = path.join(process.cwd(), 'dploy_decompress.php');
+            fs.copyFileSync(path.join(__dirname, '../scripts/decompress.php'), decompressScript);
+            this.toUpload.push({name: decompressScript, remote: this.config.path.public + '/dploy_decompress.php'});
+            let compressNum = 0;
+            this.config.compress.forEach((key)=>{
+                if(!fs.lstatSync(key).isDirectory()) return;
+                console.log("Compressing folder".bold.yellow, `[${key}]`.yellow);
+                const targetFile = md5(key) + '.zip';
+                zipFolder(key, process.cwd() + '/' + targetFile, err => {
+                    if(err) reject(err);
+                    else this.toUpload.push({name: targetFile, remote: key +'/' + targetFile});
+                    compressNum++;
+                    if(compressNum == this.config.compress.length) resolve();
+                });
+            });
+        })
     }
 
 

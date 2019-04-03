@@ -205,9 +205,11 @@ include:
 
 The **compress** parameter lets you define folders that will be compressed to a single zip file before upload.
 
+```
 compress:
       - "vendor"
       - "node_modules"
+```
 
 ## Ignore include flag
 If you are using the **include** parameter on your `dploy.yaml`, you will note that those files will always be uploaded to the server, no matter if they were modified or not (because they aren't necessarily tracked by git).  

@@ -1,21 +1,17 @@
 # DPLOY
 
-## Origin : https://github.com/AdonMaster/dploy/
+## Origin : https://github.com/KenorFR/dploy
 ## First origin : https://github.com/lucasmotta/dploy
-
-```
-npm install https://github.com/KenorFR/dploy.git -g
-```
 
 **DPLOY is an FTP/SFTP deployment tool built in node.js**  
 Uploads the latest changes by comparing the version on your server with your git repository.
 
 
 ## Install
-Install DPLOY and it's dependancies globally by running:
+Install DPLOY and it's dependencies globally by running:
 
 ```
-npm install dploy -g
+npm install https://github.com/DieSchittigs/dploy.git -g
 ```
 
 ## Help
@@ -33,7 +29,7 @@ dploy --version
 Will deploy the first environment that you have on your `dploy.yaml`
 
 ### dploy install
-Will install the `dploy.yaml` file and set up a `post-commit` script on your `.git/hooks` folder so you can _DPLOY_ from your commit message as well.
+Will install the `dploy.yaml` file.
 
 ### dploy …rest
 Anything else after the `dploy` command will be used as an environment, like this:  
@@ -186,11 +182,15 @@ Exclude files that are tracked by git, but that you don't want on your server. Y
 * Using glob: `exclude: ["*.yaml", "*.json", "path/**/*.js", "**/*.md"]`.
 
 ### include
-* Type: `Object`  
+* Type: `Array||Object`  
 * Default: `none`    
 
-The **include** parameter is similar to the **exclude**. But instead of an array, it expects an object.  
-The **key** of your object is what *DPLOY* is gonna search locally and the **value** of your object is the destination on the remote server (this path is relative to the **path.remote**!). Again you can also target individual files or multiple using [glob](https://github.com/isaacs/minimatch) on the key of your object.
+The **include** parameter is similar to the **exclude**. Again you can target individual files or use [glob](https://github.com/isaacs/minimatch) to target multiple files and file types.
+
+* Individual files: `include: ["videos/kitty.mp4", "videos/ducklings.mp4"]`.
+* Using glob: `include: ["videos/*.mp4"]`.
+
+Alternatively you may define an object. The **key** of your object is what *DPLOY* is gonna search locally and the **value** of your object is the destination on the remote server (this path is relative to the **path.remote**!). Once again you can also target individual files or multiple using [glob](https://github.com/isaacs/minimatch) on the key of your object.
 
 ```
 include:
@@ -268,8 +268,8 @@ dploy dev stage production
 ## Including and excluding files
 This example will upload your local `deploy` folder to your remote `public_html` folder and:    
 
-* Will **include** all `.mp4` files inside your `videos` folder to a remote folder named `funny` on your server.
-* Will **include** all `json`, `yaml` and `xml` files at your cwd folder to a remote folder named `data`.
+* Will **include** all `.jpeg` files inside your `photos` folder.
+* Will **include** `kitty.mp4` and `ducklings.mp4` files from your `videos` folder.
 * Will **exclude** all `yaml`, `json` from your `deploy` folder.
 * Will **exclude** all `js` files inside the folder `deploy/path`.
 * Will **exclude** all `md` files from your `deploy` folder.
@@ -282,30 +282,21 @@ server_name:
     path:
         local: "deploy/"
         remote: "public_html/"
-    exclude: ["deploy/*.yaml", "deploy/*.json", "deploy/path/**/*.js", "deploy/**/*.md"]
+    exclude:
+        - "deploy/*.yaml"
+        - "deploy/*.json"
+        - "deploy/path/**/*.js"
+        - "deploy/**/*.md"
     include:
-        "videos/*.mp4": "funny/"
-        "*.json *.yaml *.xml": "data/"
+        - "videos/kitty.mp4"
+        - "videos/ducklings.mp4"
+        - "photos/*.jpeg"
 
 ```
 
 # Contribute
 Feel free to contribute to DPLOY in any way. If you have any issues, questions or suggestions, just create it at the issues page.  
 If you want to create your own fork, follow the instructions bellow to build **DPLOY**:  
-
-### build
-You need to install the dependencies from npm first and then just use grunt to compile the CoffeeScript:
-
-```
-grunt
-```
-
-### watch
-You can watch the changes by running the watch task from grunt:
-
-```
-grunt watch
-```
 
 # Mentions
 **DPLOY** was inspired by another great tool written in Ruby, called [dandelion](https://github.com/scttnlsn/dandelion) from [Scott Nelson](https://github.com/scttnlsn).

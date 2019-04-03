@@ -14,7 +14,7 @@ Thumbs.db
 
 # Node files #
 ######################
-node_modules
+node_modules/
 
 # Project files #
 ######################

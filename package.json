@@ -13,7 +13,7 @@
     "type": "git",
     "url": "https://github.com/KenorFR/dploy"
   },
-  "main": "./lib/dploy",
+  "main": "./src/dploy.js",
   "bin": {
     "dploy": "./bin/dploy"
   },
@@ -21,21 +21,13 @@
     "node": ">= 0.10.x"
   },
   "dependencies": {
-    "colors": "^0.6.2",
-    "ftp": "~0.3.x",
-    "glob-expand": "0.0.2",
-    "minimatch": "~0.2.x",
-    "prompt": "~0.2.x",
-    "signals": "~1.0.x",
-    "ssh2": "0.4.15",
-    "yamljs": "~0.1.x"
-  },
-  "devDependencies": {
-    "grunt": "~0.4.x",
-    "grunt-contrib-coffee": "~0.7.x",
-    "grunt-contrib-watch": "~0.5.x",
-    "grunt-bump": "~0.0.x",
-    "grunt-shell": "~0.6.x",
-    "grunt-coffeelint": "0.0.x"
+    "colors": "^1.3.3",
+    "ftp": "^0.3.10",
+    "glob-expand": "^0.2.1",
+    "minimatch": "^3.0.4",
+    "prompt": "^1.0.0",
+    "signals": "^1.0.0",
+    "ssh2": "^0.8.2",
+    "yamljs": "^0.3.0"
   }
 }

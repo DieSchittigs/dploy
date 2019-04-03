@@ -1,5 +1,22 @@
 #!/usr/bin/env node
-var path = require('path');
-var fs = require('fs');
-var lib = path.join(path.dirname(fs.realpathSync(__filename)), "../lib");
-new (require(lib + "/dploy.js"));
+const path = require('path');
+const fs = require('fs');
+const lib = path.join(path.dirname(fs.realpathSync(__filename)), "../src");
+
+const DPLOY = require(lib + "/dploy.js");
+const Generator = require(lib + "/generator.js");
+const Help = require(lib + "/help.js");
+const Version = require(lib + "/version.js");
+
+// Call the DPLOY generator
+if (process.argv.indexOf("install") >= 0) {
+    new Generator();
+// Open the help
+} else if ((process.argv.indexOf("--help") >= 0) || (process.argv.indexOf("-h") >= 0)) {
+    new Help();
+// Print version
+} else if ((process.argv.indexOf("--version") >= 0) || (process.argv.indexOf("-v") >= 0)) {
+    new Version();
+} else {
+    new DPLOY();
+}

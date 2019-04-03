@@ -112,12 +112,14 @@ module.exports = class Deploy {
         if (this.config.scheme == null) { this.config.scheme = "ftp"; }
         if (this.config.port == null) { this.config.port = (this.config.scheme === "ftp" ? 21 : 22); }
         if (this.config.secure == null) { this.config.secure = false; }
+        if (this.config.url == undefined) { this.config.url = null; }
         if (this.config.secureOptions == null) { this.config.secureOptions = {}; }
         if (this.config.slots == null) { this.config.slots = 1; }
         if (this.config.revision == null) { this.config.revision = ".rev"; }
         if (this.config.path == null) { this.config.path = {}; }
         if (this.config.path.local == null) { this.config.path.local = ""; }
         if (this.config.path.remote == null) { this.config.path.remote = ""; }
+        if (this.config.path.public == null) { this.config.path.public = ""; }
         if (this.config.exclude == null) { this.config.exclude = []; }
         if (this.config.include == null) { this.config.include = []; }
 
@@ -426,9 +428,11 @@ module.exports = class Deploy {
                 }
             }
             if(!this.config.compress) return resolve();
-            const decompressScript = path.join(process.cwd(), 'dploy_callback.php');
-            fs.copyFileSync(path.join(__dirname, '../scripts/callback.php'), decompressScript);
-            this.toUpload.push({name: decompressScript, remote: this.config.path.public + '/dploy_callback.php'});
+            if(this.config.url){
+                const decompressScript = path.join(process.cwd(), 'dploy_callback.php');
+                fs.copyFileSync(path.join(__dirname, '../scripts/callback.php'), decompressScript);
+                this.toUpload.push({name: decompressScript, remote: path.join(this.config.path.public, '/dploy_callback.php')});
+            }
             let compressNum = 0;
             this.config.compress.forEach((key)=>{
                 if(!fs.lstatSync(key).isDirectory()) return;

@@ -292,9 +292,11 @@ server_name:
     host: "ftp.myserver.com"
     user: "user"
     pass: "password"
+    url: "http://myserver.com"
     path:
         local: "deploy/"
         remote: "public_html/"
+        public: "/"
     exclude:
         - "deploy/*.yaml"
         - "deploy/*.json"

@@ -5,9 +5,11 @@ dev:
     user: user
     pass: password
     check: true
+    url: http://my-dev-server.com
     path:
         local: release/
         remote: public_html/
+        public: /
 
 stage:
     scheme: ftp
@@ -16,9 +18,11 @@ stage:
     user: user
     pass: password
     check: true
+    url: http://my-stage-server.com
     path:
         local: release/
         remote: public_html/
+        public: /
 
 live:
     scheme: ftp
@@ -27,6 +31,8 @@ live:
     user: user
     pass: password
     check: true
+    url: http://my-live-server.com
     path:
         local: release/
         remote: public_html/
+        public: /

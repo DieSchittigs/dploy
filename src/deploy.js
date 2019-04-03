@@ -426,9 +426,9 @@ module.exports = class Deploy {
                 }
             }
             if(!this.config.compress) return resolve();
-            const decompressScript = path.join(process.cwd(), 'dploy_decompress.php');
-            fs.copyFileSync(path.join(__dirname, '../scripts/decompress.php'), decompressScript);
-            this.toUpload.push({name: decompressScript, remote: this.config.path.public + '/dploy_decompress.php'});
+            const decompressScript = path.join(process.cwd(), 'dploy_callback.php');
+            fs.copyFileSync(path.join(__dirname, '../scripts/callback.php'), decompressScript);
+            this.toUpload.push({name: decompressScript, remote: this.config.path.public + '/dploy_callback.php'});
             let compressNum = 0;
             this.config.compress.forEach((key)=>{
                 if(!fs.lstatSync(key).isDirectory()) return;

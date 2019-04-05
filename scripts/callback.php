@@ -1,11 +1,20 @@
 <?php
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 $payload = json_decode(file_get_contents('php://input'));
 header('content-type: application/json');
 
+$response = [
+    'message' => null,
+    'error' => null
+];
+
 switch ($payload->action){
     case 'ping':
-        echo json_encode(['pong' => true]);
+        $response['pong'] = true;
     break;
     case 'decompress':
         $zip = new ZipArchive;
@@ -13,9 +22,9 @@ switch ($payload->action){
         if ($res === true) {
             $zip->extractTo(dirname($payload->file));
             $zip->close();
-            echo json_encode(['success' => true]);
+            $response['message'] = 'Decompressed ' . $payload->file;
         } else {
-            echo json_encode(['error' => 'decompress_failed']);
+            $response['error'] = 'Decompression of ' . $payload->file . ' failed';
         }
         unlink($payload->file);
     break;
@@ -24,3 +33,5 @@ switch ($payload->action){
         exit;
     break;
 }
+
+echo json_encode($response, JSON_NUMERIC_CHECK | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

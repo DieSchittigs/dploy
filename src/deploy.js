@@ -1,16 +1,15 @@
-const colors  = require("colors");
 const path   = require("path");
 const fs   = require("fs");
-const YAML  = require("yamljs");
 const Signal  = require("signals");
 const expand  = require("glob-expand");
 const minimatch = require("minimatch");
 const prompt  = require("prompt");
 const zipFolder = require('zip-folder');
 const md5 = require('md5');
+const YAML  = require("yamljs");
+const axios  = require("axios");
 const { exec }  = require("child_process");
-
-
+const colors  = require("colors");
 
 module.exports = class Deploy {
 
@@ -36,6 +35,8 @@ module.exports = class Deploy {
         this.toUpload   = null;
         this.toDelete   = null;
         this.dirCreated   = null;
+        this.deleteFiles = [];
+        this.remoteCallbacks = [];
 
         this.isConnected   = null;
         this.completed    = null;
@@ -90,6 +91,10 @@ module.exports = class Deploy {
                 process.exit(code=0);
             }
 
+            if(this.config.parent && yaml[this.config.parent]) {
+                this.config = Object.assign(yaml[this.config.parent], this.config);
+            }
+
             return this.configLoaded();
         });
     }
@@ -113,6 +118,8 @@ module.exports = class Deploy {
         if (this.config.port == null) { this.config.port = (this.config.scheme === "ftp" ? 21 : 22); }
         if (this.config.secure == null) { this.config.secure = false; }
         if (this.config.url == undefined) { this.config.url = null; }
+        if (this.config.callback == undefined) { this.config.callback = null; }
+        if (this.config.parent == undefined) { this.config.parent = null; }
         if (this.config.secureOptions == null) { this.config.secureOptions = {}; }
         if (this.config.slots == null) { this.config.slots = 1; }
         if (this.config.revision == null) { this.config.revision = ".rev"; }
@@ -254,11 +261,11 @@ module.exports = class Deploy {
         // Retrieve the revision file from the server so we can compare to our local one
         const remotePath = this._normalize(this.config.path.remote + this.config.revision);
         return this.connection.get(remotePath, (error, data) => {
+            this.deleteFiles.push(this.revisionPath);
             // If the file was not found, we need to create one with HEAD hash
             if (error) {
                 fs.writeFile(this.revisionPath, this.local_hash, error => {
                     if (error) { return console.log("Error creating revision file at:".red, `${this.revisionPath}`.red.bold.underline, error); }
-
                     // Since this is our first upload, we will upload our entire local tree
                     return this.addAll();
                 });
@@ -393,7 +400,6 @@ module.exports = class Deploy {
     includeExtraFiles() {
         return new Promise((resolve, reject) => {
             if (this.ignoreInclude || this.catchup) { return resolve(); }
-
             if(Array.isArray(this.config.include)){
                 this.config.include.forEach((key)=>{
                     const files = expand({ filter: "isFile", cwd:process.cwd() }, key);
@@ -407,7 +413,6 @@ module.exports = class Deploy {
                         remoteFile = remoteFile.replace(/(\/\/)/g, "/");
         
                         this.toUpload.push({name:file, remote:remoteFile});
-                        if(!this.config.compress) return resolve();
                     }
                 });
             } else {
@@ -423,24 +428,29 @@ module.exports = class Deploy {
                         remoteFile = remoteFile.replace(/(\/\/)/g, "/");
         
                         this.toUpload.push({name:file, remote:remoteFile});
-                        if(!this.config.compress) return resolve();
                     }
                 }
             }
-            if(!this.config.compress) return resolve();
             if(this.config.url){
-                const decompressScript = path.join(process.cwd(), 'dploy_callback.php');
+                const decompressScript = 'dploy_callback.php';
                 fs.copyFileSync(path.join(__dirname, '../scripts/callback.php'), decompressScript);
                 this.toUpload.push({name: decompressScript, remote: path.join(this.config.path.public, '/dploy_callback.php')});
+                this.deleteFiles.push(decompressScript);
             }
+            if(!this.config.compress) return resolve();
             let compressNum = 0;
             this.config.compress.forEach((key)=>{
                 if(!fs.lstatSync(key).isDirectory()) return;
                 console.log("Compressing folder".bold.yellow, `[${key}]`.yellow);
                 const targetFile = md5(key) + '.zip';
+                this.deleteFiles.push(targetFile);
                 zipFolder(key, process.cwd() + '/' + targetFile, err => {
-                    if(err) reject(err);
-                    else this.toUpload.push({name: targetFile, remote: key +'/' + targetFile});
+                    if(err) return reject(err);
+                    this.toUpload.push({name: targetFile, remote: key + '/' + targetFile});
+                    this.remoteCallbacks.push({
+                        action: 'decompress',
+                        file: path.relative(path.join('./', this.config.path.public), path.join(key, targetFile))
+                    });
                     compressNum++;
                     if(compressNum == this.config.compress.length) resolve();
                 });
@@ -661,27 +671,26 @@ module.exports = class Deploy {
         const remote_path = this._normalize(this.config.path.remote + item.remote);
 
         // lets check it's existance first
-        if (fs.statSync(item.name)) {
-            // Upload the file to the server
-            return connection.upload(item.name, remote_path, error => {
-                if (error) {
-                    console.log("[ + ]".blue, `Fail uploading file ${item.name}:`.red, error);
-                    item.started = false;
-                    item.completed = false;
-                } else {
-                    console.log("[ + ]".blue + ` File uploaded: ${item.name}:`.blue);
-                    item.completed = true;
-                }
-
-                // Keep uploading the rest
-                return this.nextOnQueue(connection);
-            });
-        } else {
-            console.log("[ + ]".red, `WTF? ${item.name}:`.red);
-//   console.log "[ + ]".red, "Fail to find the god damn file #{item.name}:".red
+        if (!fs.existsSync(item.name)) {
+            console.log("[ ! ]".red, `File is missing: ${item.name}:`.red);
             item.completed = true;
             return this.nextOnQueue(connection);
         }
+            
+        // Upload the file to the server
+        return connection.upload(item.name, remote_path, error => {
+            if (error) {
+                console.log("[ ! ]".red, ` Failed uploading file ${item.name}:`.red, error);
+                item.started = false;
+                item.completed = false;
+            } else {
+                console.log("[ + ]".blue + ` File uploaded: ${item.name}:`.blue);
+                item.completed = true;
+            }
+
+            // Keep uploading the rest
+            return this.nextOnQueue(connection);
+        });
     }
 
     /*
@@ -699,7 +708,7 @@ module.exports = class Deploy {
         // Delete the file from the server
         return connection.delete(remote_path, error => {
             if (error) {
-                console.log("[ × ]".grey, `Fail deleting file ${remote_path}:`.red);
+                console.log("[ × ]".red, `Failed deleting file ${remote_path}:`.red);
             } else {
                 console.log("[ × ]".grey, `File deleted: ${remote_path}:`.grey);
             }
@@ -772,10 +781,46 @@ module.exports = class Deploy {
     */
     complete(displayMessage) {
         // Delete the revision file localy and complete :)
-        return fs.unlink(this.revisionPath, err => {
-            if (displayMessage) { console.log("Upload completed for ".green + `${this.server}`.bold.underline.green); }
-            return this.completed.dispatch();
+        this.deleteFiles.forEach(file => {
+            fs.unlinkSync(file);
         });
+        
+        if (displayMessage) {
+            console.log("Upload completed for ".green + `${this.server}`.bold.underline.green);
+            if(this.remoteCallbacks){
+                const cbUrl = this.config.url + '/dploy_callback.php';
+                axios.post(cbUrl, { action: 'ping' })
+                .then(({data}) => {
+                    if(!data.pong) return;
+                    console.log(`Triggering callback script at ${cbUrl.bold.yellow}`.yellow);
+                    this.remoteCallbacks.forEach(payload => {
+                        axios.post(cbUrl, payload)
+                        .then(({data})=>{
+                            if(data.error) console.log(cbUrl.red, data.error.bold.red);
+                            else if(data.message) console.log(cbUrl.green, data.message.bold.green);
+                        })
+                        .catch(e => {
+                            console.log(`No valid response from ${cbUrl.bold.red}`.red, e.message.red, e);
+                        })
+                    });
+                })
+                .catch(e => {
+                    console.log(`No valid response from ${cbUrl.bold.red}`.red, e.message.red);
+                });
+            }
+            if(this.config.callback){
+                console.log(`Triggering callback script at ${this.config.callback.bold.yellow}`.yellow);
+                axios.get(this.config.callback)
+                .then(({data}) => {
+                    console.log(`Response from ${this.config.callback.bold.green}`.green);
+                    console.log("\n", data.grey, "\n");
+                })
+                .catch(e => {
+                    console.log(`No valid response from ${this.config.callback.bold.red}`.red, e.message.red);
+                });
+            }
+        }
+        return this.completed.dispatch();
     }
 
 

@@ -172,6 +172,12 @@ The local folder that you want to upload to the server. If you don't set anythin
 
 The remote folder where your files will be uploaded. If you don't set anything, your files will be uploaded to the root of your server. We **highly recommend** that you set this!
 
+### path.public
+* Type: `String`  
+* Default: `/`  
+
+The remote folder from which public files are served via HTTP.
+
 ### exclude  
 * Type: `Array`  
 * Default: `none`    
@@ -210,6 +216,22 @@ compress:
       - "vendor"
       - "node_modules"
 ```
+
+### url
+* Type: `String`  
+* Default: `none`
+
+Absolute target URL. If you don't define this, the automatic callback files will not be used.
+
+### callback
+* Type: `String`  
+* Default: `none`
+
+Absolute URL which will be called after upload is done.
+
+### parent
+* Type: `String`  
+* Default: `none`
 
 ## Ignore include flag
 If you are using the **include** parameter on your `dploy.yaml`, you will note that those files will always be uploaded to the server, no matter if they were modified or not (because they aren't necessarily tracked by git).  
@@ -264,6 +286,11 @@ production:
     path:
         local: "deploy/"
         remote: "public_html/"
+
+production_vendor:
+    parent: "production"
+    compress:
+        - "vendor"
 ```
 
 Deploy to **stage** environment only:
@@ -274,7 +301,7 @@ dploy stage
 Or if you want to upload to more than one environment:  
 
 ```
-dploy dev stage production
+dploy production production_vendor
 ```
 
 ## Including and excluding files

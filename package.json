@@ -1,7 +1,13 @@
 {
   "name": "dploy",
-  "version": "1.6.0",
+  "version": "2.0.0",
+  "license": "MIT",
   "author": "Lucas Motta <http://lucasmotta.com>",
+  "contributors": [
+      "AdonMaster <https://github.com/AdonMaster>",
+      "KenorFR <https://github.com/KenorFR>",
+      "Tobias Duehr <tobias@dieschittigs.de>"
+  ],
   "description": "Command line tool to deploy websites using FTP/SFTP and git.",
   "keywords": [
     "ftp",
@@ -11,19 +17,21 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/KenorFR/dploy"
+    "url": "https://github.com/DieSchittigs/dploy"
   },
   "main": "./src/dploy.js",
   "bin": {
     "dploy": "./bin/dploy"
   },
   "engines": {
-    "node": ">= 0.10.x"
+    "node": ">= 10.15.x"
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "colors": "^1.3.3",
     "ftp": "^0.3.10",
     "glob-expand": "^0.2.1",
+    "lodash": "^4.17.11",
     "md5": "^2.2.1",
     "minimatch": "^3.0.4",
     "prompt": "^1.0.0",
